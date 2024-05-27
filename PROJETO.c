@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 //parte do projeto de ICC feita por mim (daniel)
 
 typedef struct{ //obs particular da variavel classe: pensei em deixar a classe com valor de 0 ou 1 pra economica (0) e executiva (1), fica mais facil de guardar
@@ -35,7 +36,7 @@ int main(void){
     int cpf1; //esse cpf aqui é pra localizar a pessoa que eu quero, vou usar ele só pra ler o cpf e procurar dentro do vetor
     scanf("%s", &comando);
 
-    if(comando == 'CR'){
+    if(strcmp(comando, "CR\0")){
         scanf("%d", &cpf1); //leio o cpf da respectiva pessoa de quem quero consultar a reserva
         for(int i = 0; i < 10; i++){
             if(galera[i].cpf == cpf1){ //procuro a pessoa com esse cpf dentro do vetor
