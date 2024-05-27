@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-//parte do projeto de ICC feita por mim
+//parte do projeto de ICC feita por mim (daniel)
 
 typedef struct{ //obs particular da variavel classe: pensei em deixar a classe com valor de 0 ou 1 pra economica (0) e executiva (1), fica mais facil de guardar
     int cpf, data, voo, classe, valor; //variaveis um tanto quanto faceis de entender o que representam, nao vou explicar
