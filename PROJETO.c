@@ -53,20 +53,20 @@ int main(void){
     int cpf; //esse cpf aqui é pra localizar a pessoa que eu quero, vou usar ele só pra ler o cpf e procurar dentro do vetor
     scanf("%s", &comando);
 
-    if(strcmp(comando, "CR\0")){
+    if(!strcmp(comando, "CR\0")){
         cpf = acha(galera); //detalhe: o valor dessa variavel é meramente a posição no vetor da pessoa com tal cpf e não o proprio numero do cpf, só pra deixar claro
         cr(galera[cpf]); //chamo a função (fora do loop) com as informações da pessoa com o cpf que me foi dado
     }
 
-    if(strcmp(comando, "CA\0")){ //exata mesma logica de cima, só repeti tudo e dividi os dois em duas parte diferente pra ficar mais organizadinho de ver
+    if(!strcmp(comando, "CA\0")){ //exata mesma logica de cima, só repeti tudo e dividi os dois em duas parte diferente pra ficar mais organizadinho de ver
         cpf = acha(galera);
         ca(galera[cpf]);
     }
 
-    if(strcmp(comando, "MR\0")){
+    if(!strcmp(comando, "MR\0")){
         cpf = acha(galera);
         //parei aqui, em progresso!!!
         //a ideia agora é criar uma função em que eu posso alterar os dados da reserva (obviamente, talvez)
     }
 }
-//ate agora só fiz pra CR, vou tentar os outros comandos depois
+//ate agora só fiz pra CR e um protótipo de CA (talvez nem isso), vou tentar os outros comandos depois
