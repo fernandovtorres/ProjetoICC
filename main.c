@@ -549,7 +549,8 @@ void fecharVoo(float valortotal) {
         printf("Valor total: %.2f\n", valortotal);
         
         printf("--------------------------------------------------\n");
-
+        fclose(fs);
+        liberarReserva(&pessoa);
         remove("AVoo.dat");
         remove("RegistroPessoa.dat");
         remove("monetario.dat");
