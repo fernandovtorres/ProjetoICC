@@ -245,15 +245,15 @@ void modificarReserva(){
         alocaTemp(&pessoa);
         FILE *fs = fopen("RegistroPessoa.dat", "rb");
         FILE *fs2 = fopen("RegistroPessoaTemp.dat", "wb");
-        char nomee[50], sobrenome[50], cpf[15], assento[4];
+        char nomee[50], sobrenome[50], cpf[15], assento[4], searchkey[15];
+        scanf(" %s", searchkey);
         scanf(" %s", nomee);
         scanf(" %s", sobrenome);
         scanf(" %s", cpf);
         scanf(" %s", assento);
-        if (consultaNome(nomee, sobrenome) != -1 || consultaCPF(cpf) != -1 || consultaAssento(assento) != -1) {
-            int mod_line = consultaNome(nomee, sobrenome) != -1 ? consultaNome(nomee, sobrenome) : consultaCPF(cpf) > -1 ? consultaCPF(cpf) : consultaAssento(assento);
+        if (consultaCPF(searchkey) != -1) {
+            int mod_line = consultaCPF(searchkey);
             int i = 0;
-
             while (fread(pessoa.nome, 50 * sizeof(char), 1, fs) &&
                 fread(pessoa.sobrenome, 50 * sizeof(char), 1, fs) &&
                 fread(pessoa.cpf, 15 * sizeof(char), 1, fs) &&
@@ -516,7 +516,6 @@ void fecharVoo(float valortotal) {
         printf("Voo não foi aberto!\n");
         exit(0);
     } else {
-        FILE *fs = fopen("RegistroPessoa.dat", "rb");
         if(monetarioExiste()){
             FILE *fs2 = fopen("monetario.dat", "rb");
             float total_prev;
@@ -529,27 +528,29 @@ void fecharVoo(float valortotal) {
         alocaTemp(&pessoa);
 
         printf("Voo Fechado!\n\n");
-        while (fread(pessoa.nome, 50 * sizeof(char), 1, fs) &&
-               fread(pessoa.sobrenome, 50 * sizeof(char), 1, fs) &&
-               fread(pessoa.cpf, 15 * sizeof(char), 1, fs) &&
-               fread(&pessoa.dia, sizeof(int), 1, fs) &&
-               fread(&pessoa.mes, sizeof(int), 1, fs) &&
-               fread(&pessoa.ano, sizeof(int), 1, fs) &&
-               fread(pessoa.id, 5 * sizeof(char), 1, fs) &&
-               fread(pessoa.assento, 4 * sizeof(char), 1, fs) &&
-               fread(pessoa.classe, 10 * sizeof(char), 1, fs) &&
-               fread(&pessoa.valor, sizeof(float), 1, fs) &&
-               fread(pessoa.origem, 4 * sizeof(char), 1, fs) &&
-               fread(pessoa.destino, 4 * sizeof(char), 1, fs)) {
-            printf("%s\n", pessoa.cpf);
-            printf("%s", pessoa.nome);
-            printf(" %s\n", pessoa.sobrenome);
-            printf("%s\n\n", pessoa.assento);
+        if(RegistroExiste()){
+            FILE *fs = fopen("RegistroPessoa.dat", "rb");
+            while (fread(pessoa.nome, 50 * sizeof(char), 1, fs) &&
+                fread(pessoa.sobrenome, 50 * sizeof(char), 1, fs) &&
+                fread(pessoa.cpf, 15 * sizeof(char), 1, fs) &&
+                fread(&pessoa.dia, sizeof(int), 1, fs) &&
+                fread(&pessoa.mes, sizeof(int), 1, fs) &&
+                fread(&pessoa.ano, sizeof(int), 1, fs) &&
+                fread(pessoa.id, 5 * sizeof(char), 1, fs) &&
+                fread(pessoa.assento, 4 * sizeof(char), 1, fs) &&
+                fread(pessoa.classe, 10 * sizeof(char), 1, fs) &&
+                fread(&pessoa.valor, sizeof(float), 1, fs) &&
+                fread(pessoa.origem, 4 * sizeof(char), 1, fs) &&
+                fread(pessoa.destino, 4 * sizeof(char), 1, fs)) {
+                printf("%s\n", pessoa.cpf);
+                printf("%s", pessoa.nome);
+                printf(" %s\n", pessoa.sobrenome);
+                printf("%s\n\n", pessoa.assento);
+            } 
+            fclose(fs);
         }
         printf("Valor total: %.2f\n", valortotal);
-        
         printf("--------------------------------------------------\n");
-        fclose(fs);
         liberarReserva(&pessoa);
         remove("AVoo.dat");
         remove("RegistroPessoa.dat");
