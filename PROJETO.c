@@ -11,7 +11,7 @@ typedef struct{ //obs particular da variavel classe: pensei em deixar a classe c
 int acha(pessoa galera[10]){ //uso essa função pra ler qual o cpf que eu quero localizar
     int cont = 11; //o contador recebendo 11 aqui vai funcionar pro comando MR, vai lá pra baixo se quiser entender certin
     char cpf[15];
-    scanf(" %s", &cpf);
+    scanf(" %s", cpf);
     for(int i = 0; i < 10; i++){ //a partir daí, saio procurando dentro do vetor de pessoas, na variavel cpf, aquele que foi digitado
         if(!strcmp(cpf, galera[i].cpf)){
             cont = i; //a variavel recebe a posição do vetor que o cpf ta localizado
@@ -69,13 +69,14 @@ int achaassento(pessoa galera[10], char *assento){ //uso essa função caso no M
             return cont;
         }
     }
+    return cont;
 }
 
 int main(void){
     pessoa galera[10]; //a galera aqui é o vetor de todos os clientes que vamos ter por aí (não sei quantos vão ser ent deixei 10)
     char comando[3], nome[20], sobrenome[20], assento[4], cpf[15];
     int index = 0; //esse index aqui é pra localizar a pessoa que eu quero, vou usar ele só pra procurar a posição que me interessa dentro do vetor
-    scanf("%s", &comando);
+    scanf("%s", comando);
 
     if(!strcmp(comando, "CR\0")){
         index = acha(galera); 
