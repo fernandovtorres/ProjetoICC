@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -222,7 +221,7 @@ float valorTotal) {
 int consultaCPF(char cpf[15]) {
     if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
         printf("Voo não foi aberto ou nenhum registro existe!\n");
-        exit(0);
+        return -1;
     } else {
         FILE *fs = fopen("RegistroPessoa.dat", "rb");
         reserva pessoa;
@@ -427,42 +426,51 @@ void cancelarReserva(float *valorTotal, int* qntresv) {
 }
 
 void consultarReserva() {
-    FILE *fs = fopen("RegistroPessoa.dat", "rb");
-    reserva pessoa;
-    alocaTemp(&pessoa);
-    char cpf[15];
-    scanf(" %s", cpf);
-    int pos = consultaCPF(cpf);
-    int i = 0;
-    while (fread(pessoa.nome, 50 * sizeof(char), 1, fs) &&
-           fread(pessoa.sobrenome, 50 * sizeof(char), 1, fs) &&
-           fread(pessoa.cpf, 15 * sizeof(char), 1, fs) &&
-           fread(&pessoa.dia, sizeof(int), 1, fs) &&
-           fread(&pessoa.mes, sizeof(int), 1, fs) &&
-           fread(&pessoa.ano, sizeof(int), 1, fs) &&
-           fread(pessoa.id, 5 * sizeof(char), 1, fs) &&
-           fread(pessoa.assento, 4 * sizeof(char), 1, fs) &&
-           fread(pessoa.classe, 10 * sizeof(char), 1, fs) &&
-           fread(&pessoa.valor, sizeof(float), 1, fs) &&
-           fread(pessoa.origem, 4 * sizeof(char), 1, fs) &&
-           fread(pessoa.destino, 4 * sizeof(char), 1, fs)) {
-        if (i == pos) {
-            printf("%s\n", pessoa.cpf);
-            printf("%s", pessoa.nome);
-            printf(" %s\n", pessoa.sobrenome);
-            printf("%d/%d/%d\n", pessoa.dia, pessoa.mes, pessoa.ano);
-            printf("Voo: %s\n", pessoa.id);
-            printf("Assento: %s\n", pessoa.assento);
-            printf("Classe: %s\n", pessoa.classe);
-            printf("Trecho: %s", pessoa.origem);
-            printf(" %s\n", pessoa.destino);
-            printf("Valor: %.2f\n", pessoa.valor);
-            printf("--------------------------------------------------\n");
+    if(!VooExiste()){
+        printf("Voo não foi aberto\n");
+        exit(0);
+    }else {
+        FILE *fs;
+        if((fs = fopen("RegistroPessoa.dat", "rb")) == NULL){
+            printf("Nenhuma reserva foi feita\n");
+            return;
         }
-        i++;
+        reserva pessoa;
+        alocaTemp(&pessoa);
+        char cpf[15];
+        scanf(" %s", cpf);
+        int pos = consultaCPF(cpf);
+        int i = 0;
+        while (fread(pessoa.nome, 50 * sizeof(char), 1, fs) &&
+            fread(pessoa.sobrenome, 50 * sizeof(char), 1, fs) &&
+            fread(pessoa.cpf, 15 * sizeof(char), 1, fs) &&
+            fread(&pessoa.dia, sizeof(int), 1, fs) &&
+            fread(&pessoa.mes, sizeof(int), 1, fs) &&
+            fread(&pessoa.ano, sizeof(int), 1, fs) &&
+            fread(pessoa.id, 5 * sizeof(char), 1, fs) &&
+            fread(pessoa.assento, 4 * sizeof(char), 1, fs) &&
+            fread(pessoa.classe, 10 * sizeof(char), 1, fs) &&
+            fread(&pessoa.valor, sizeof(float), 1, fs) &&
+            fread(pessoa.origem, 4 * sizeof(char), 1, fs) &&
+            fread(pessoa.destino, 4 * sizeof(char), 1, fs)) {
+            if (i == pos) {
+                printf("%s\n", pessoa.cpf);
+                printf("%s", pessoa.nome);
+                printf(" %s\n", pessoa.sobrenome);
+                printf("%d/%d/%d\n", pessoa.dia, pessoa.mes, pessoa.ano);
+                printf("Voo: %s\n", pessoa.id);
+                printf("Assento: %s\n", pessoa.assento);
+                printf("Classe: %s\n", pessoa.classe);
+                printf("Trecho: %s", pessoa.origem);
+                printf(" %s\n", pessoa.destino);
+                printf("Valor: %.2f\n", pessoa.valor);
+                printf("--------------------------------------------------\n");
+            }
+            i++;
+        }
+        fclose(fs);
+        liberarReserva(&pessoa);
     }
-    fclose(fs);
-    liberarReserva(&pessoa);
 }
 
 int consultaNome(char nome[50], char sobrenome[50]) {
