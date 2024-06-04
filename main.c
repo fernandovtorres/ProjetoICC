@@ -33,6 +33,7 @@ int monetarioExiste(); //Verifica se o arquivo monetario existe
 void fecharVoo(float valortotal); //Fecha o voo
 void alocaTemp(reserva* pessoa);
 void liberarReserva(reserva* pessoa);
+void printVooFechado();
 
 void alocaTemp(reserva* pessoa) {
     pessoa->nome = (char *)malloc(50 * sizeof(char));
@@ -83,9 +84,20 @@ int monetarioExiste() {
     return 0;
 }
 
+int vooFechou(){
+    FILE *fs = fopen("AVoof.dat", "rb");
+    if (fs) {
+        fclose(fs);
+        return 1;
+    }
+    return 0;
+}
+
 void aberturaVoo() {
     if (VooExiste()) {
         printf("O voo já foi aberto!\n");
+    } else if(vooFechou())  {
+        printVooFechado();
     } else {
         FILE *fs = fopen("AVoo.dat", "wb");
         int ndeassentos;
@@ -101,10 +113,12 @@ void aberturaVoo() {
 }
 
 void realizarReserva(float *valorTotal, int *quantresv, int *voo) {
-    if (!VooExiste()) {
+    if (!VooExiste() && !vooFechou()) {
         printf("Voo não foi aberto!\n");
         exit(0);
-    } else {
+    }else if(vooFechou()){
+        printVooFechado();
+    }else {
         reserva pessoa;
         alocaTemp(&pessoa);
         FILE *fs = fopen("RegistroPessoa.dat", "ab+");
@@ -160,43 +174,45 @@ void realizarReserva(float *valorTotal, int *quantresv, int *voo) {
 
 void fecharDia(int quantresv, 
 float valorTotal) {
-    if (!VooExiste()) {
+    if (!VooExiste() && !vooFechou()) {
         printf("Voo não foi aberto!\n");
         exit(0);
+    }else if(vooFechou()){
+        printVooFechado();
     } else {
         FILE *fs = fopen("AVoo.dat", "rb");
-        int ndeassentos;
-        fread(&ndeassentos, sizeof(int), 1, fs);
+        int assentosIniciais;
+        int assentosRestantes;
+        fread(&assentosIniciais, sizeof(int), 1, fs);
         fclose(fs);
 
         if (!monetarioExiste()) {
             fs = fopen("monetario.dat", "wb");
-            int assentos = ndeassentos - quantresv;
-            fwrite(&assentos, sizeof(int), 1, fs);
+            assentosRestantes = assentosIniciais - quantresv;
+            fwrite(&assentosRestantes, sizeof(int), 1, fs);
             fwrite(&valorTotal, sizeof(float), 1, fs);
             fclose(fs);
         } else {
             fs = fopen("monetario.dat", "rb");
             FILE *fs2 = fopen("monetariotemp.dat", "wb");
-            int assentos;
             float total_prev;
-            fread(&assentos, sizeof(int), 1, fs);
+            fread(&assentosRestantes, sizeof(int), 1, fs);
             fread(&total_prev, sizeof(float), 1, fs);
             fclose(fs);
 
-            assentos -= quantresv;
+            assentosRestantes -= quantresv;
             valorTotal += total_prev;
 
-            fwrite(&assentos, sizeof(int), 1, fs2);
+            fwrite(&assentosRestantes, sizeof(int), 1, fs2);
             fwrite(&valorTotal, sizeof(float), 1, fs2);
             fclose(fs2);
 
             remove("monetario.dat");
             rename("monetariotemp.dat", "monetario.dat");
         }
-
+        int reservaTotais = assentosIniciais - assentosRestantes;
         printf("Fechamento do dia:\n");
-        printf("Quantidade de reservas: %d\n", quantresv);
+        printf("Quantidade de reservas: %d\n", reservaTotais);
         printf("Posição: %.2f\n", valorTotal);
         printf("--------------------------------------------------\n");
         exit(0);
@@ -204,7 +220,7 @@ float valorTotal) {
 }
 
 int consultaCPF(char cpf[15]) {
-    if (!VooExiste() || !RegistroExiste()) {
+    if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
         printf("Voo não foi aberto ou nenhum registro existe!\n");
         exit(0);
     } else {
@@ -237,9 +253,11 @@ int consultaCPF(char cpf[15]) {
 }
 
 void modificarReserva(){
-    if (!VooExiste() || !RegistroExiste()) {
+    if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
         printf("Voo não foi aberto ou nenhum registro existe!\n");
         exit(0);
+    }else if(vooFechou()){
+        printVooFechado();
     } else {
         reserva pessoa;
         alocaTemp(&pessoa);
@@ -333,10 +351,12 @@ void modificarReserva(){
 }
 
 void cancelarReserva(float *valorTotal, int* qntresv) {
-    if (!VooExiste() || !RegistroExiste()) {
+    if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
         printf("Voo não foi aberto ou nenhum registro existe!\n");
         exit(0);
-    } else {
+    }else if(vooFechou()){
+        printVooFechado(); 
+    }else {
         reserva pessoa;
         alocaTemp(&pessoa);
         FILE *fs = fopen("RegistroPessoa.dat", "rb");
@@ -446,7 +466,7 @@ void consultarReserva() {
 }
 
 int consultaNome(char nome[50], char sobrenome[50]) {
-    if (!VooExiste() || !RegistroExiste()) {
+    if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
         printf("Voo não foi aberto ou nenhum registro existe!\n");
         exit(0);
     } else {
@@ -479,7 +499,7 @@ int consultaNome(char nome[50], char sobrenome[50]) {
 }
 
 int consultaAssento(char assento[4]) {
-    if (!VooExiste() || !RegistroExiste()) {
+    if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
         printf("Voo não foi aberto ou nenhum registro existe!\n");
         exit(0);
     } else {
@@ -511,11 +531,45 @@ int consultaAssento(char assento[4]) {
     }
 }
 
+void printVooFechado(){
+    float valorFinal;
+    FILE *fs2 = fopen("AVoof.dat", "rb");
+    fread(&valorFinal, sizeof(float), 1, fs2);
+    fclose(fs2);
+    reserva pessoa;
+    alocaTemp(&pessoa);
+    printf("Voo Fechado!\n\n");
+    if(RegistroExiste()){
+        FILE *fs = fopen("RegistroPessoa.dat", "rb");
+        while (fread(pessoa.nome, 50 * sizeof(char), 1, fs) &&
+            fread(pessoa.sobrenome, 50 * sizeof(char), 1, fs) &&
+            fread(pessoa.cpf, 15 * sizeof(char), 1, fs) &&
+            fread(&pessoa.dia, sizeof(int), 1, fs) &&
+            fread(&pessoa.mes, sizeof(int), 1, fs) &&
+            fread(&pessoa.ano, sizeof(int), 1, fs) &&
+            fread(pessoa.id, 5 * sizeof(char), 1, fs) &&
+            fread(pessoa.assento, 4 * sizeof(char), 1, fs) &&
+            fread(pessoa.classe, 10 * sizeof(char), 1, fs) &&
+            fread(&pessoa.valor, sizeof(float), 1, fs) &&
+            fread(pessoa.origem, 4 * sizeof(char), 1, fs) &&
+            fread(pessoa.destino, 4 * sizeof(char), 1, fs)) {
+            printf("%s\n", pessoa.cpf);
+            printf("%s", pessoa.nome);
+            printf(" %s\n", pessoa.sobrenome);
+            printf("%s\n\n", pessoa.assento);
+        } 
+        fclose(fs);
+    }
+    printf("Valor total: %.2f\n", valorFinal);
+    printf("--------------------------------------------------\n");
+    liberarReserva(&pessoa);
+}
+
 void fecharVoo(float valortotal) {
-    if (!VooExiste()) {
+    if (!VooExiste()  && !vooFechou()) {
         printf("Voo não foi aberto!\n");
         exit(0);
-    } else {
+    }else {
         if(monetarioExiste()){
             FILE *fs2 = fopen("monetario.dat", "rb");
             float total_prev;
@@ -523,6 +577,17 @@ void fecharVoo(float valortotal) {
             fread(&total_prev, sizeof(float), 1, fs2);
             fclose(fs2);
             valortotal += total_prev;
+        }
+        float valorFinal;
+        if (vooFechou()){
+            FILE *fs2 = fopen("AVoof.dat", "rb");
+            fread(&valorFinal, sizeof(float), 1, fs2);
+            fclose(fs2);
+            valortotal = valorFinal;
+        } else {
+            FILE *fs2 = fopen("AVoof.dat", "wb");
+            fwrite(&valortotal, sizeof(float), 1, fs2);
+            remove("AVoo.dat");
         }
         reserva pessoa;
         alocaTemp(&pessoa);
@@ -552,9 +617,6 @@ void fecharVoo(float valortotal) {
         printf("Valor total: %.2f\n", valortotal);
         printf("--------------------------------------------------\n");
         liberarReserva(&pessoa);
-        remove("AVoo.dat");
-        remove("RegistroPessoa.dat");
-        remove("monetario.dat");
         exit(0);
     }
 }
