@@ -656,7 +656,7 @@ void printVooFechado(reserva **galera, int reservasTotais){
     fread(&valorFinal, sizeof(float), 1, fs2);
     fclose(fs2);
     printf("Voo Fechado!\n\n");
-    if(RegistroExiste()){
+    if(reservasTotais){
         for(int i = 0; i < reservasTotais; i++){
             printf("%s\n", (*galera)[i].cpf);
             printf("%s", (*galera)[i].nome);
@@ -702,7 +702,7 @@ int main(void) {
             fecharVoo(valortotal, reservasTotais, &galera);
         }
         else {
-            continue;
+            continue;   
         }
     }
     return 0;
