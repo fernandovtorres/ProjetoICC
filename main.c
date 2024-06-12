@@ -212,6 +212,8 @@ int vooFechou(){
 * Função para realizar a consulta de uma reserva via cpf
 *
 * @param char cpf[15]: cpf utilizado para a consulta
+*        galera: ponteiro da struct reserva
+*        int reservasTotais: número de reservas feitas
 * @return int: posição da reserva no arquivo, -1 caso não seja encontrada
 */
 
@@ -232,7 +234,8 @@ int consultaCPF(char cpf[15], reserva **galera, int reservasTotais) {
 * Função para abrir o voo.
 * Caso o arquivo Avoo.dat não exista (o que indica que o voo não foi aberto), a função pede a quantidade de assentos e o preço da classe economica e executiva.
 * Em seguida, os dados são escritos no arquivo criado Avoo.dat.
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: número de reservas feitas
 * @return void
 */
 
@@ -262,7 +265,8 @@ void aberturaVoo(reserva **galera, int reservasTotais) {
 * Função para realizar a reserva de pessoas e verificar se o voo pode ser fechado por conta da falta de novos assentos.
 *
 * @param float *valorTotal: ponteiro para o valor total das reservas
-*        int *quantresv: ponteiro para a quantidade de reservas
+*        galera: ponteiro da struct reserva
+*        int *reservasTotais: ponteiro para a quantidade de reservas existentes
 *        int *voo: ponteiro para a variável que indica se o voo pode ser fechado por conta da falta de assentos restantes
 * @return void
 */
@@ -315,7 +319,8 @@ void realizarReserva(float *valorTotal, int *voo, reserva **galera, int *reserva
 /*
 * Função para realizar a consulta de uma reserva e imprimir os dados da mesma caso seja encontrada
 *
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: número de reservas totais existentes
 * @return void
 */
 
@@ -353,7 +358,9 @@ void consultarReserva(reserva **galera, int reservasTotais) {
 /*
 * Função para cancelar uma reserva via chave de busca (cpf)
 *
-* @param char cpf[15]: cpf utilizado para a consulta
+* @param float *valorTotal: ponteiro para o valor total das reserva
+*        int *reservasTotais: ponteiro para a quantidade de reservas totais existentes
+*        galera: ponteiro da struct reserva
 * @return void
 */
 
@@ -403,7 +410,8 @@ void cancelarReserva(float *valorTotal, int* reservasTotais, reserva **galera) {
 /*
 * Função para realizar a modificação de uma reserva via uma chave de busca (cpf)
 *
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: quantidade de reservas totais existentes
 * @return void
 */
 
@@ -442,6 +450,7 @@ void modificarReserva(reserva **galera, int reservasTotais){
 *
 * @param int quantresv: quantidade de reservas feitas no dia
 *        float valorTotal: valor total arrecadado no dia
+*        galera: ponteiro da struct reserva
 * @return void
 */
 
@@ -543,6 +552,8 @@ void fecharDia(int quantresv, float valorTotal, reserva **galera) {
 * Função para realizar o fechamento o voo, imprimindo os dados das reservas e o valor total arrecadado
 *
 * @param float valortotal: valor total arrecadado no dia que irá ser somado ao valor total arrecadado até o dia
+*        int reservasTotais: quantidade de reservas totais existentes
+*        galera: ponteiro da struct reserva
 * @return void
 */
 
@@ -588,7 +599,8 @@ void fecharVoo(float valortotal, int reservasTotais, reserva **galera) {
 /*
 * Função para repetição do print formatado avisando que o voo foi fechado
 *
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: quantidade de reservas totais existentes
 * @return void
 */
 
