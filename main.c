@@ -10,7 +10,11 @@ RR Maria Massa 444.555.333-93 12 12 2024 V001 A31 economica 1200.00 CGH RAO
 RR Roberto Carlos 555.333.333-89 12 12 2024 V001 P12 executiva 2500.00 CGH RAO
 MR 555.555.333-99 Carlos Massa 555.555.333-99 A30
 FD
-
+RR Euclides Simon 222.111.333-12 12 12 2024 V001 B01 economica 1200.00 CGH RAO
+RR Marta Rocha 999.888.222-21 12 12 2024 V001 C02 executiva 2500.00 CGH RAO
+CR  555.333.333-89
+RR Clara Nunes 111.000.123-45 12 12 2024 V001 C09 executiva 2500.00 CGH RAO
+FV
 */
 
 /*
@@ -312,7 +316,6 @@ void realizarReserva(float *valorTotal, int *voo, reserva **galera, int *reserva
         scanf(" %s", pessoa.destino);
         *galera = realloc(*galera, (*reservasTotais) * sizeof(reserva));
         (*galera)[(*reservasTotais) - 1] = pessoa;
-        printf("%s\n", (*galera)[0].nome);
     }
 }
 
@@ -328,13 +331,6 @@ void consultarReserva(reserva **galera, int reservasTotais) {
     if(!VooExiste() && !vooFechou()){
         return;
     }else {
-        FILE *fs;
-        if((fs = fopen("RegistroPessoa.dat", "rb")) == NULL){
-            printf("Nenhuma reserva foi feita\n");
-            fclose(fs);
-            return;
-        }
-        fclose(fs);
         char cpf[15];
         scanf(" %s", cpf);
         int pos = consultaCPF(cpf, galera, reservasTotais);
@@ -546,7 +542,7 @@ void fecharDia(int quantresv, float valorTotal, reserva **galera) {
         printf("--------------------------------------------------\n");
         exit(0);
     }
-}
+}   
 
 /*
 * Função para realizar o fechamento o voo, imprimindo os dados das reservas e o valor total arrecadado
@@ -561,6 +557,56 @@ void fecharVoo(float valortotal, int reservasTotais, reserva **galera) {
     if (!VooExiste()  && !vooFechou()) {
         return;
     }else {
+        FILE *fs;
+        if(!RegistroExiste()){
+            fs = fopen("RegistroPessoa.dat", "wb");
+            for(int i = 0; i < reservasTotais; i ++) {
+                size_t tmn = strlen((*galera)[i].nome);
+                tmn ++;
+                fwrite(&tmn, sizeof(size_t), 1, fs);
+                fwrite((*galera)[i].nome, tmn * sizeof(char), 1, fs);
+                tmn = strlen((*galera)[i].sobrenome);
+                tmn ++;
+                fwrite(&tmn, sizeof(size_t), 1, fs);
+                fwrite((*galera)[i].sobrenome, tmn * sizeof(char), 1, fs);
+                fwrite((*galera)[i].cpf, 15 * sizeof(char), 1, fs);
+                fwrite(&(*galera)[i].dia, sizeof(int), 1, fs);
+                fwrite(&(*galera)[i].mes, sizeof(int), 1, fs);
+                fwrite(&(*galera)[i].ano, sizeof(int), 1, fs);
+                fwrite((*galera)[i].id, 5 * sizeof(char), 1, fs);
+                fwrite((*galera)[i].assento, 4 * sizeof(char), 1, fs);
+                fwrite((*galera)[i].classe, 10 * sizeof(char), 1, fs);
+                fwrite(&(*galera)[i].valor, sizeof(float), 1, fs);
+                fwrite((*galera)[i].origem, 4 * sizeof(char), 1, fs);
+                fwrite((*galera)[i].destino, 4 * sizeof(char), 1, fs);
+            }
+            fclose(fs);
+        } else {
+            fs = fopen("RegistroPessoatemp.dat", "wb");
+            for(int i = 0; i < reservasTotais; i++) {
+                size_t tmn = strlen((*galera)[i].nome);
+                tmn ++;
+                fwrite(&tmn, sizeof(size_t), 1, fs);
+                fwrite((*galera)[i].nome, tmn * sizeof(char), 1, fs);
+                tmn = strlen((*galera)[i].sobrenome);
+                tmn ++;
+                fwrite(&tmn, sizeof(size_t), 1, fs);
+                fwrite((*galera)[i].sobrenome, tmn * sizeof(char), 1, fs);
+                fwrite((*galera)[i].cpf, 15 * sizeof(char), 1, fs);
+                fwrite(&(*galera)[i].dia, sizeof(int), 1, fs);
+                fwrite(&(*galera)[i].mes, sizeof(int), 1, fs);
+                fwrite(&(*galera)[i].ano, sizeof(int), 1, fs);
+                fwrite((*galera)[i].id, 5 * sizeof(char), 1, fs);
+                fwrite((*galera)[i].assento, 4 * sizeof(char), 1, fs);
+                fwrite((*galera)[i].classe, 10 * sizeof(char), 1, fs);
+                fwrite(&(*galera)[i].valor, sizeof(float), 1, fs);
+                fwrite((*galera)[i].origem, 4 * sizeof(char), 1, fs);
+                fwrite((*galera)[i].destino, 4 * sizeof(char), 1, fs);
+            }
+            fclose(fs);
+            remove("RegistroPessoa.dat");
+            rename("RegistroPessoatemp.dat", "RegistroPessoa.dat");
+        }
         if(monetarioExiste()){
             FILE *fs2 = fopen("monetario.dat", "rb");
             float total_prev;
@@ -582,7 +628,7 @@ void fecharVoo(float valortotal, int reservasTotais, reserva **galera) {
         }
 
         printf("Voo Fechado!\n\n");
-        if(RegistroExiste()){
+        if(reservasTotais){
             for(int i = 0; i < reservasTotais; i++){
                 printf("%s\n", (*galera)[i].cpf);
                 printf("%s", (*galera)[i].nome);
