@@ -9,6 +9,7 @@ RR Carlos Massa 555.555.333-99 12 12 2024 V001 A27 economica 1200.00 CGH RAO
 RR Maria Massa 444.555.333-93 12 12 2024 V001 A31 economica 1200.00 CGH RAO
 RR Roberto Carlos 555.333.333-89 12 12 2024 V001 P12 executiva 2500.00 CGH RAO
 MR 555.555.333-99 Carlos Massa 555.555.333-99 A30
+CA 444.555.333-93
 FD
 RR Euclides Simon 222.111.333-12 12 12 2024 V001 B01 economica 1200.00 CGH RAO
 RR Marta Rocha 999.888.222-21 12 12 2024 V001 C02 executiva 2500.00 CGH RAO
@@ -166,7 +167,7 @@ int VooExiste() {
 
 /*
 * Função para verificar se o arquivo referente ao registro das pessoas existe
-*
+*   
 * @param void
 * @return int: 1 se o arquivo existe, 0 caso não exista
 */
@@ -176,6 +177,7 @@ int RegistroExiste() {
     if (fs) {
         fclose(fs);
         return 1;
+
     }
     return 0;
 }
@@ -216,6 +218,8 @@ int vooFechou(){
 * Função para realizar a consulta de uma reserva via cpf
 *
 * @param char cpf[15]: cpf utilizado para a consulta
+*        galera: ponteiro da struct reserva
+*        int reservasTotais: número de reservas feitas
 * @return int: posição da reserva no arquivo, -1 caso não seja encontrada
 */
 
@@ -236,15 +240,14 @@ int consultaCPF(char cpf[15], reserva **galera, int reservasTotais) {
 * Função para abrir o voo.
 * Caso o arquivo Avoo.dat não exista (o que indica que o voo não foi aberto), a função pede a quantidade de assentos e o preço da classe economica e executiva.
 * Em seguida, os dados são escritos no arquivo criado Avoo.dat.
-* @param void
-* @return void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: número de reservas feitas
+* @return voidv
 */
 
 void aberturaVoo(reserva **galera, int reservasTotais) {
-    if (VooExiste()) {
+    if (VooExiste() || vooFechou()) {
         return;
-    } else if(vooFechou())  {
-        printVooFechado(galera, reservasTotais);
     } else {
         FILE *fs = fopen("AVoo.dat", "wb");
         int ndeassentos;
@@ -266,7 +269,8 @@ void aberturaVoo(reserva **galera, int reservasTotais) {
 * Função para realizar a reserva de pessoas e verificar se o voo pode ser fechado por conta da falta de novos assentos.
 *
 * @param float *valorTotal: ponteiro para o valor total das reservas
-*        int *quantresv: ponteiro para a quantidade de reservas
+*        galera: ponteiro da struct reserva
+*        int *reservasTotais: ponteiro para a quantidade de reservas existentes
 *        int *voo: ponteiro para a variável que indica se o voo pode ser fechado por conta da falta de assentos restantes
 * @return void
 */
@@ -275,7 +279,7 @@ void realizarReserva(float *valorTotal, int *voo, reserva **galera, int *reserva
     if (!VooExiste() && !vooFechou()) {
         return;
     }else if(vooFechou()){
-        printVooFechado(galera, *reservasTotais);
+        return;
     }else {
         reserva pessoa;
         alocaTemp(&pessoa);
@@ -318,7 +322,8 @@ void realizarReserva(float *valorTotal, int *voo, reserva **galera, int *reserva
 /*
 * Função para realizar a consulta de uma reserva e imprimir os dados da mesma caso seja encontrada
 *
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: número de reservas totais existentes
 * @return void
 */
 
@@ -349,49 +354,50 @@ void consultarReserva(reserva **galera, int reservasTotais) {
 /*
 * Função para cancelar uma reserva via chave de busca (cpf)
 *
-* @param char cpf[15]: cpf utilizado para a consulta
+* @param float *valorTotal: ponteiro para o valor total das reserva
+*        int *reservasTotais: ponteiro para a quantidade de reservas totais existentes
+*        galera: ponteiro da struct reserva
 * @return void
 */
 
 void cancelarReserva(float *valorTotal, int* reservasTotais, reserva **galera) {
-    if ((!VooExiste() || !RegistroExiste()) && !vooFechou()) {
+    if (!VooExiste() && !vooFechou()) {
         return;
     }else if(vooFechou()){
         printVooFechado(galera, *reservasTotais); 
     }else {
         char cpf[15];
         scanf(" %s", cpf);
-        int j = 0;
-        for(int i = 0; i < (*reservasTotais); i++){
-            if(strcmp((*galera)[i].cpf, cpf) && !j){
-                continue;
-            } else if(!strcmp((*galera)[i].cpf, cpf)) {
-                j = 1;
-                (*valorTotal) -= (*galera)[i].valor;
-                if(monetarioExiste()){
-                    FILE *fs3 = fopen("monetario.dat", "rb");
-                    FILE *fs4 = fopen("monetariotemp.dat", "wb");
-                    int assentos;
-                    float total_prev;
-                    fread(&assentos, sizeof(int), 1, fs3);
-                    fread(&total_prev, sizeof(float), 1, fs3);
-                    fclose(fs3);
-                    assentos ++;
-                    fwrite(&assentos, sizeof(int), 1, fs4);
-                    fwrite(&total_prev, sizeof(float), 1, fs4);
-                    fclose(fs4);
-                    remove("monetario.dat");
-                    rename("monetariotemp.dat", "monetario.dat");
+        int eraseLine = consultaCPF(cpf, galera, *reservasTotais);
+        if(eraseLine != -1){
+            int j = 0;
+            for(int i = 0; i < *reservasTotais; i++) {
+                if (i != eraseLine) {
+                    (*galera)[j] = (*galera)[i];
+                    j++;
+                    
                 } else {
-                    *reservasTotais -= 1;
+                    *valorTotal -= (*galera)[i].valor;
+                    liberarReserva(&(*galera)[i]);
+                    if(monetarioExiste()){
+                        FILE *fs3 = fopen("monetario.dat", "rb");
+                        FILE *fs4 = fopen("monetariotemp.dat", "wb");
+                        int assentos;
+                        float total_prev;
+                        fread(&assentos, sizeof(int), 1, fs3);
+                        fread(&total_prev, sizeof(float), 1, fs3);
+                        fclose(fs3);
+                        assentos ++;
+                        fwrite(&assentos, sizeof(int), 1, fs4);
+                        fwrite(&total_prev, sizeof(float), 1, fs4);
+                        fclose(fs4);
+                        remove("monetario.dat");
+                        rename("monetariotemp.dat", "monetario.dat");
+                    }
                 }
             }
-            if(j){
-                if(i == (*reservasTotais) - 1){
-                    break;
-                }
-                (*galera)[i] = (*galera)[i + 1];
-            }
+            *reservasTotais = j;
+            *galera = realloc(*galera, j * sizeof(reserva));
         }
     }
 }
@@ -399,7 +405,8 @@ void cancelarReserva(float *valorTotal, int* reservasTotais, reserva **galera) {
 /*
 * Função para realizar a modificação de uma reserva via uma chave de busca (cpf)
 *
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: quantidade de reservas totais existentes
 * @return void
 */
 
@@ -438,6 +445,7 @@ void modificarReserva(reserva **galera, int reservasTotais){
 *
 * @param int quantresv: quantidade de reservas feitas no dia
 *        float valorTotal: valor total arrecadado no dia
+*        galera: ponteiro da struct reserva
 * @return void
 */
 
@@ -531,6 +539,17 @@ void fecharDia(int quantresv, float valorTotal, reserva **galera) {
         printf("Quantidade de reservas: %d\n", reservaTotais);
         printf("Posição: %.2f\n", valorTotal);
         printf("--------------------------------------------------\n");
+        for (int i = 0; i < quantresv; i++) {
+            free((*galera)[i].nome);
+            free((*galera)[i].sobrenome);
+            free((*galera)[i].assento);
+            free((*galera)[i].classe);
+            free((*galera)[i].origem);
+            free((*galera)[i].destino);
+            free((*galera)[i].cpf);
+            free((*galera)[i].id);
+        }
+        free(*galera);
         exit(0);
     }
 }   
@@ -539,12 +558,28 @@ void fecharDia(int quantresv, float valorTotal, reserva **galera) {
 * Função para realizar o fechamento o voo, imprimindo os dados das reservas e o valor total arrecadado
 *
 * @param float valortotal: valor total arrecadado no dia que irá ser somado ao valor total arrecadado até o dia
+*        int reservasTotais: quantidade de reservas totais existentes
+*        galera: ponteiro da struct reserva
 * @return void
 */
 
 void fecharVoo(float valortotal, int reservasTotais, reserva **galera) {
     if (!VooExiste()  && !vooFechou()) {
         return;
+    }else if(vooFechou()){
+        printVooFechado(galera, reservasTotais);
+        for (int i = 0; i < reservasTotais; i++) {
+            free((*galera)[i].nome);
+            free((*galera)[i].sobrenome);
+            free((*galera)[i].assento);
+            free((*galera)[i].classe);
+            free((*galera)[i].origem);
+            free((*galera)[i].destino);
+            free((*galera)[i].cpf);
+            free((*galera)[i].id);
+        }
+        free(*galera);
+        exit(0);
     }else {
         FILE *fs;
         if(!RegistroExiste()){
@@ -614,19 +649,23 @@ void fecharVoo(float valortotal, int reservasTotais, reserva **galera) {
             FILE *fs2 = fopen("AVoof.dat", "wb");
             fwrite(&valortotal, sizeof(float), 1, fs2);
             remove("AVoo.dat");
+            fclose(fs2);
         }
 
-        printf("Voo Fechado!\n\n");
-        if(reservasTotais){
-            for(int i = 0; i < reservasTotais; i++){
-                printf("%s\n", (*galera)[i].cpf);
-                printf("%s", (*galera)[i].nome);
-                printf(" %s\n", (*galera)[i].sobrenome);
-                printf("%s\n\n", (*galera)[i].assento);
-            }
+        printVooFechado(galera, reservasTotais);
+
+
+        for (int i = 0; i < reservasTotais; i++) {
+            free((*galera)[i].nome);
+            free((*galera)[i].sobrenome);
+            free((*galera)[i].assento);
+            free((*galera)[i].classe);
+            free((*galera)[i].origem);
+            free((*galera)[i].destino);
+            free((*galera)[i].cpf);
+            free((*galera)[i].id);
         }
-        printf("Valor total: %.2f\n", valortotal);
-        printf("--------------------------------------------------\n");
+        free(*galera);
         exit(0);
     }
 }
@@ -634,7 +673,8 @@ void fecharVoo(float valortotal, int reservasTotais, reserva **galera) {
 /*
 * Função para repetição do print formatado avisando que o voo foi fechado
 *
-* @param void
+* @param galera: ponteiro da struct reserva
+*        int reservasTotais: quantidade de reservas totais existentes
 * @return void
 */
 
@@ -668,6 +708,9 @@ int main(void) {
     float valortotal = 0;
     reserva *galera = NULL;
     int reservasTotais = lerArquivo(&galera);
+    if(vooFechou()){
+        printVooFechado(&galera, reservasTotais);
+    }
     while (1) {
         char comando[3];
         scanf(" %s", comando);
