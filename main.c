@@ -29,7 +29,7 @@ FD
 *  Número USP: 15452340, 15446861, 15459372 
 *  Curso: Bacharelado em Ciências de Computação
 *  Disciplina: SCC0221 - Introdução à Ciência de Computação I
-*  Data de entrega: 14/06/2024
+*  Data de entrega: 15/06/2024
 *  Descrição do projeto:
 *  O projeto consiste em um sistema de gerenciamento de reservas de voos. 
 *  O sistema permite a abertura de um voo, a realização, a consulta, o cancelamento e a modificação de reservas, o fechamento do dia e o fechamento do voo.
