@@ -13,9 +13,15 @@ CA 444.555.333-93
 FD
 RR Euclides Simon 222.111.333-12 12 12 2024 V001 B01 economica 1200.00 CGH RAO
 RR Marta Rocha 999.888.222-21 12 12 2024 V001 C02 executiva 2500.00 CGH RAO
-CR  555.333.333-89
+CR 555.333.333-89
 RR Clara Nunes 111.000.123-45 12 12 2024 V001 C09 executiva 2500.00 CGH RAO
-FV  
+FV
+
+AV 150 500.00 1200.00
+RR João Silva 123.456.789-00 15 06 2024 V001 A01 economica 500.00 GRU CGH
+RR Maria Souza 987.654.321-00 15 06 2024 V001 A02 economica 500.00 GRU CGH
+RR Carlos Lima 555.666.777-88 15 06 2024 V001 B01 executiva 1200.00 GRU CGH
+FD
 */
 
 /*
@@ -23,7 +29,7 @@ FV
 *  Número USP: 15452340, 15446861, 15459372 
 *  Curso: Bacharelado em Ciências de Computação
 *  Disciplina: SCC0221 - Introdução à Ciência de Computação I
-*  Data de entrega: 06/06/2024
+*  Data de entrega: 14/06/2024
 *  Descrição do projeto:
 *  O projeto consiste em um sistema de gerenciamento de reservas de voos. 
 *  O sistema permite a abertura de um voo, a realização, a consulta, o cancelamento e a modificação de reservas, o fechamento do dia e o fechamento do voo.
@@ -49,9 +55,9 @@ typedef struct {
     char* cpf;
     char* nome;
     char* sobrenome;
-    int dia;
-    int mes;
-    int ano;
+    char* dia;
+    char* mes;
+    char* ano;
     char* id;
     char* assento;
     char* classe;
@@ -59,6 +65,18 @@ typedef struct {
     char* destino;
     float valor;
 } reserva;
+
+/*
+* Foi também utilizado um struct para armazenar os dados do avião.
+* O struct possui os seguintes campos:
+* - int assentos: armazena a quantidade de assentos do avião
+* - int reservasTotais: armazena a quantidade total de reservas feitas
+* - int reservasAlocadas: armazena a quantidade de reservas alocadas
+* - float precoEconomica: armazena o preço da classe economica
+* - float precoExecutiva: armazena o preço da classe executiva
+* - float valorTotal: armazena o valor total arrecadado
+* - reserva* galera: um array de reservas
+*/
 
 typedef struct {
     int assentos;
@@ -72,6 +90,7 @@ typedef struct {
 
 
 void lerArquivo(aviao *voo); //Lê o arquivo de registro
+void exportarArquivo(aviao* voo); //Exporta o arquivo de registro
 void alocaTemp(reserva* pessoa); //Aloca memória para os campos do struct
 void liberarReserva(reserva* pessoa); //Libera memória alocada para os campos do struct
 int RegistroExiste(); //Verifica se o arquivo de registro existe
@@ -115,9 +134,9 @@ void lerArquivo(aviao *voo){
         pessoa.sobrenome = (char *)malloc(tmnSobrenome * sizeof(char));
         fread(pessoa.sobrenome, tmnSobrenome * sizeof(char), 1, fs);
         fread(pessoa.cpf, 15 * sizeof(char), 1, fs);
-        fread(&pessoa.dia, sizeof(int), 1, fs);
-        fread(&pessoa.mes, sizeof(int), 1, fs);
-        fread(&pessoa.ano, sizeof(int), 1, fs);
+        fread(pessoa.dia, 3 * sizeof(char), 1, fs);
+        fread(pessoa.mes, 3 * sizeof(char), 1, fs);
+        fread(pessoa.ano, 5 * sizeof(char), 1, fs);
         fread(pessoa.id, 5 * sizeof(char), 1, fs);
         fread(pessoa.assento, 4 * sizeof(char), 1, fs);
         fread(pessoa.classe, 10 * sizeof(char), 1, fs);
@@ -133,6 +152,69 @@ void lerArquivo(aviao *voo){
     fclose(fs);
 }
 
+void exportarArquivo(aviao* voo){
+    if(RegistroExiste()){
+        FILE *fs2 = fopen("SuperRegistroTemp.dat", "wb");
+        fwrite(&voo->assentos, sizeof(int), 1, fs2);
+        fwrite(&voo->reservasTotais, sizeof(int), 1, fs2);
+        fwrite(&voo->reservasAlocadas, sizeof(int), 1, fs2);
+        fwrite(&voo->precoEconomica, sizeof(float), 1, fs2);
+        fwrite(&voo->precoExecutiva, sizeof(float), 1, fs2);
+        fwrite(&voo->valorTotall, sizeof(float), 1, fs2);
+        for(int i = 0; i < (voo->reservasTotais); i ++) {
+            size_t tmn = strlen(voo->galera[i].nome);
+            tmn ++;
+            fwrite(&tmn, sizeof(size_t), 1, fs2);
+            fwrite(voo->galera[i].nome, tmn * sizeof(char), 1, fs2);
+            tmn = strlen(voo->galera[i].sobrenome);
+            tmn ++;
+            fwrite(&tmn, sizeof(size_t), 1, fs2);
+            fwrite(voo->galera[i].sobrenome, tmn * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].cpf, 15 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].dia, 3 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].mes, 3 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].ano, 5 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].id, 5 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].assento, 4 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].classe, 10 * sizeof(char), 1, fs2);
+            fwrite(&voo->galera[i].valor, sizeof(float), 1, fs2);
+            fwrite(voo->galera[i].origem, 4 * sizeof(char), 1, fs2);
+            fwrite(voo->galera[i].destino, 4 * sizeof(char), 1, fs2);
+        }
+        fclose(fs2);
+        remove("SuperRegistro.dat");
+        rename("SuperRegistroTemp.dat", "SuperRegistro.dat");
+    } else {
+        FILE *fs = fopen("SuperRegistro.dat", "wb");
+        fwrite(&voo->assentos, sizeof(int), 1, fs);
+        fwrite(&voo->reservasTotais, sizeof(int), 1, fs);
+        fwrite(&voo->reservasAlocadas, sizeof(int), 1, fs);
+        fwrite(&voo->precoEconomica, sizeof(float), 1, fs);
+        fwrite(&voo->precoExecutiva, sizeof(float), 1, fs);
+        fwrite(&voo->valorTotall, sizeof(float), 1, fs);
+        for(int i = 0; i < (voo->reservasTotais); i ++) {
+            size_t tmn = strlen(voo->galera[i].nome);
+            tmn ++;
+            fwrite(&tmn, sizeof(size_t), 1, fs);
+            fwrite(voo->galera[i].nome, tmn * sizeof(char), 1, fs);
+            tmn = strlen(voo->galera[i].sobrenome);
+            tmn ++;
+            fwrite(&tmn, sizeof(size_t), 1, fs);
+            fwrite(voo->galera[i].sobrenome, tmn * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].cpf, 15 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].dia, 3 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].mes, 3 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].ano, 5 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].id, 5 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].assento, 4 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].classe, 10 * sizeof(char), 1, fs);
+            fwrite(&voo->galera[i].valor, sizeof(float), 1, fs);
+            fwrite(voo->galera[i].origem, 4 * sizeof(char), 1, fs);
+            fwrite(voo->galera[i].destino, 4 * sizeof(char), 1, fs);
+        }
+        fclose(fs);
+    }
+}
 /*
 * Função para alocar dinamicamente os campos do struct
 *
@@ -147,6 +229,9 @@ void alocaTemp(reserva* pessoa) {
     pessoa->classe = (char *)malloc(10 * sizeof(char));
     pessoa->origem = (char *)malloc(4 * sizeof(char));
     pessoa->destino = (char *)malloc(4 * sizeof(char));
+    pessoa->dia = (char *)malloc(3 * sizeof(char));
+    pessoa->mes = (char *)malloc(3 * sizeof(char));
+    pessoa->ano = (char *)malloc(5 * sizeof(char));
 }
 
 /*
@@ -165,6 +250,9 @@ void liberarReserva(reserva* pessoa) {
     free(pessoa->classe);
     free(pessoa->origem);
     free(pessoa->destino);
+    free(pessoa->dia);
+    free(pessoa->mes);
+    free(pessoa->ano);
 }
 
 /*
@@ -204,8 +292,7 @@ int vooFechou(){
 * Função para realizar a consulta de uma reserva via cpf
 *
 * @param char cpf[15]: cpf utilizado para a consulta
-*        galera: ponteiro da struct reserva
-*        int reservasTotais: número de reservas feitas
+*        aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return int: posição da reserva no arquivo, -1 caso não seja encontrada
 */
 
@@ -226,22 +313,29 @@ int consultaCPF(char cpf[15], aviao * voo) {
 * Função para abrir o voo.
 * Caso o arquivo Avoo.dat não exista (o que indica que o voo não foi aberto), a função pede a quantidade de assentos e o preço da classe economica e executiva.
 * Em seguida, os dados são escritos no arquivo criado Avoo.dat.
-* @param galera: ponteiro da struct reserva
-*        int reservasTotais: número de reservas feitas
-* @return voidv
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
+* @return void
 */
 
 void aberturaVoo(aviao * voo) {
-    if (RegistroExiste() || vooFechou()) {
+    if (RegistroExiste()) {
         return;
     } else {
+        int assentos;
+        float precoEconomica, precoExecutiva;
+        scanf(" %d", &assentos);
+        scanf(" %f", &precoEconomica);
+        scanf(" %f", &precoExecutiva);
+        if(vooFechou()){
+            return;
+        }
         FILE *fs = fopen("SuperRegistro.dat", "wb");
-        scanf(" %d", &(voo->assentos));
         voo->valorTotall = 0.0;
         voo->reservasTotais = 0;
-        voo->reservasAlocadas = 0;
-        scanf(" %f", &(voo->precoEconomica));
-        scanf(" %f", &(voo->precoExecutiva));
+        voo->reservasAlocadas = 0;  
+        voo->assentos = assentos;
+        voo->precoEconomica = precoEconomica;
+        voo->precoExecutiva = precoExecutiva;
         fwrite(&(voo->assentos), sizeof(int), 1, fs);
         fwrite(&(voo->reservasTotais), sizeof(int), 1, fs);
         fwrite(&(voo->precoEconomica), sizeof(float), 1, fs);
@@ -257,25 +351,21 @@ void aberturaVoo(aviao * voo) {
 /*
 * Função para realizar a reserva de pessoas e verificar se o voo pode ser fechado por conta da falta de novos assentos.
 *
-* @param float *valorTotal: ponteiro para o valor total das reservas
-*        galera: ponteiro da struct reserva
-*        int *reservasTotais: ponteiro para a quantidade de reservas existentes
-*        int *voo: ponteiro para a variável que indica se o voo pode ser fechado por conta da falta de assentos restantes
+* @param int *vooFechado: ponteiro para a variável que indica se o voo pode ser fechado por conta da falta de assentos restantes
+*        aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
+*
+* Detalhe sobre a otimização da memória:
+*   Decidimos, para o array de pessoas, alocar sempre um número fixo maior do que 1 para evitar a realocação constante de memória.
+*   Um sistema parecido com o vector do c++, porém sem o fator multiplicativo.
 */
 
 void realizarReserva(int *vooFechado, aviao * voo) {
-    if (!RegistroExiste() || vooFechou()) {
+    if (!RegistroExiste()) {
         return;
     } else {
         reserva pessoa;
         alocaTemp(&pessoa);
-        (voo->reservasTotais)++;
-
-        if((voo->assentos) - (voo->reservasTotais) == 0){
-            *vooFechado = 1;
-        }
-
         pessoa.nome = calloc(200, sizeof(char));
         scanf(" %s", pessoa.nome);
         pessoa.nome = realloc(pessoa.nome, (strlen(pessoa.nome) + 1) * sizeof(char));
@@ -283,16 +373,21 @@ void realizarReserva(int *vooFechado, aviao * voo) {
         scanf(" %s", pessoa.sobrenome);
         pessoa.sobrenome = realloc(pessoa.sobrenome, (strlen(pessoa.sobrenome) + 1) * sizeof(char));
         scanf(" %s", pessoa.cpf);
-        scanf(" %d", &pessoa.dia);
-        scanf(" %d", &pessoa.mes);
-        scanf(" %d", &pessoa.ano);
+        scanf(" %s", pessoa.dia);
+        scanf(" %s", pessoa.mes);
+        scanf(" %s", pessoa.ano);
         scanf(" %s", pessoa.id);
         scanf(" %s", pessoa.assento);
         scanf(" %s", pessoa.classe);
         scanf(" %f", &pessoa.valor);
-        voo->valorTotall += pessoa.valor;
         scanf(" %s", pessoa.origem);
         scanf(" %s", pessoa.destino);
+        (voo->reservasTotais)++;
+        voo->valorTotall += pessoa.valor;
+
+        if((voo->assentos) - (voo->reservasTotais) == 0){
+            *vooFechado = 1;
+        }
         if(voo->reservasTotais > voo->reservasAlocadas){
             if(((voo->reservasAlocadas) + 10) <= voo->assentos){
                 voo->reservasAlocadas += 10;
@@ -309,8 +404,7 @@ void realizarReserva(int *vooFechado, aviao * voo) {
 /*
 * Função para realizar a consulta de uma reserva e imprimir os dados da mesma caso seja encontrada
 *
-* @param galera: ponteiro da struct reserva
-*        int reservasTotais: número de reservas totais existentes
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
@@ -327,7 +421,7 @@ void consultarReserva(aviao * voo) {
         printf("%s\n", voo->galera[pos].cpf);
         printf("%s", voo->galera[pos].nome);
         printf(" %s\n", voo->galera[pos].sobrenome);
-        printf("%d/%d/%d\n", voo->galera[pos].dia, voo->galera[pos].mes, voo->galera[pos].ano);
+        printf("%s/%s/%s\n", voo->galera[pos].dia, voo->galera[pos].mes, voo->galera[pos].ano);
         printf("Voo: %s\n", voo->galera[pos].id);
         printf("Assento: %s\n", voo->galera[pos].assento);
         printf("Classe: %s\n", voo->galera[pos].classe);
@@ -341,14 +435,12 @@ void consultarReserva(aviao * voo) {
 /*
 * Função para cancelar uma reserva via chave de busca (cpf)
 *
-* @param float *valorTotal: ponteiro para o valor total das reserva
-*        int *reservasTotais: ponteiro para a quantidade de reservas totais existentes
-*        galera: ponteiro da struct reserva
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
 void cancelarReserva(aviao *voo) {
-    if (!RegistroExiste() || vooFechou()) {
+    if (!RegistroExiste()) {
         return;
     } else {
         char cpf[15];
@@ -376,13 +468,12 @@ void cancelarReserva(aviao *voo) {
 /*
 * Função para realizar a modificação de uma reserva via uma chave de busca (cpf)
 *
-* @param galera: ponteiro da struct reserva
-*        int reservasTotais: quantidade de reservas totais existentes
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
 void modificarReserva(aviao *voo){
-    if (!RegistroExiste() || vooFechou()) {
+    if (!RegistroExiste()) {
         return;
     } else {
         reserva pessoa;
@@ -397,14 +488,20 @@ void modificarReserva(aviao *voo){
         pessoa.sobrenome = realloc(pessoa.sobrenome, (strlen(pessoa.sobrenome) + 1) * sizeof(char));
         scanf(" %s", pessoa.cpf);
         scanf(" %s", pessoa.assento);
+        if(vooFechou()){
+            liberarReserva(&pessoa);
+            return;
+        }
         int mod_line = consultaCPF(searchkey, voo);
         if (mod_line != -1) {
             voo->galera[mod_line].nome = pessoa.nome;
             voo->galera[mod_line].sobrenome = pessoa.sobrenome;
             voo->galera[mod_line].cpf = pessoa.cpf;
             voo->galera[mod_line].assento = pessoa.assento;
-            printf("Reserva Modificada:\n%s\n%s %s\n%d/%d/%d\nVoo: %s\nAssento: %s\nClasse: %s\nTrecho: %s %s\nValor: %.2f\n", voo->galera[mod_line].cpf, voo->galera[mod_line].nome, voo->galera[mod_line].sobrenome, voo->galera[mod_line].dia, voo->galera[mod_line].mes, voo->galera[mod_line].ano, voo->galera[mod_line].id, voo->galera[mod_line].assento, voo->galera[mod_line].classe, voo->galera[mod_line].origem, voo->galera[mod_line].destino, voo->galera[mod_line].valor);
+            printf("Reserva Modificada:\n%s\n%s %s\n%s/%s/%s\nVoo: %s\nAssento: %s\nClasse: %s\nTrecho: %s %s\nValor: %.2f\n", voo->galera[mod_line].cpf, voo->galera[mod_line].nome, voo->galera[mod_line].sobrenome, voo->galera[mod_line].dia, voo->galera[mod_line].mes, voo->galera[mod_line].ano, voo->galera[mod_line].id, voo->galera[mod_line].assento, voo->galera[mod_line].classe, voo->galera[mod_line].origem, voo->galera[mod_line].destino, voo->galera[mod_line].valor);
             printf("--------------------------------------------------\n");
+        } else {
+            liberarReserva(&pessoa);
         }
     }
 }
@@ -412,9 +509,7 @@ void modificarReserva(aviao *voo){
 /*
 * Função para realizar o fechamento do dia, calculando os assentos restantes e o valor total arrecadado até o dia.
 *
-* @param int quantresv: quantidade de reservas feitas no dia
-*        float valorTotal: valor total arrecadado no dia
-*        galera: ponteiro da struct reserva
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
@@ -432,71 +527,15 @@ void fecharDia(aviao *voo) {
             free(voo->galera[i].destino);
             free(voo->galera[i].cpf);
             free(voo->galera[i].id);
+            free(voo->galera[i].dia);
+            free(voo->galera[i].mes);
+            free(voo->galera[i].ano);
         }
         free(voo->galera);
+        voo->galera = NULL;
         exit(0);
     } else {
-        if(RegistroExiste()){
-            FILE *fs2 = fopen("SuperRegistroTemp.dat", "wb");
-            fwrite(&voo->assentos, sizeof(int), 1, fs2);
-            fwrite(&voo->reservasTotais, sizeof(int), 1, fs2);
-            fwrite(&voo->reservasAlocadas, sizeof(int), 1, fs2);
-            fwrite(&voo->precoEconomica, sizeof(float), 1, fs2);
-            fwrite(&voo->precoExecutiva, sizeof(float), 1, fs2);
-            fwrite(&voo->valorTotall, sizeof(float), 1, fs2);
-            for(int i = 0; i < (voo->reservasTotais); i ++) {
-                size_t tmn = strlen(voo->galera[i].nome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs2);
-                fwrite(voo->galera[i].nome, tmn * sizeof(char), 1, fs2);
-                tmn = strlen(voo->galera[i].sobrenome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs2);
-                fwrite(voo->galera[i].sobrenome, tmn * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].cpf, 15 * sizeof(char), 1, fs2);
-                fwrite(&voo->galera[i].dia, sizeof(int), 1, fs2);
-                fwrite(&voo->galera[i].mes, sizeof(int), 1, fs2);
-                fwrite(&voo->galera[i].ano, sizeof(int), 1, fs2);
-                fwrite(voo->galera[i].id, 5 * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].assento, 4 * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].classe, 10 * sizeof(char), 1, fs2);
-                fwrite(&voo->galera[i].valor, sizeof(float), 1, fs2);
-                fwrite(voo->galera[i].origem, 4 * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].destino, 4 * sizeof(char), 1, fs2);
-            }
-            fclose(fs2);
-            remove("SuperRegistro.dat");
-            rename("SuperRegistroTemp.dat", "SuperRegistro.dat");
-        } else {
-            FILE *fs = fopen("SuperRegistro.dat", "wb");
-            fwrite(&voo->assentos, sizeof(int), 1, fs);
-            fwrite(&voo->reservasTotais, sizeof(int), 1, fs);
-            fwrite(&voo->reservasAlocadas, sizeof(int), 1, fs);
-            fwrite(&voo->precoEconomica, sizeof(float), 1, fs);
-            fwrite(&voo->precoExecutiva, sizeof(float), 1, fs);
-            fwrite(&voo->valorTotall, sizeof(float), 1, fs);
-            for(int i = 0; i < (voo->reservasTotais); i ++) {
-                size_t tmn = strlen(voo->galera[i].nome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs);
-                fwrite(voo->galera[i].nome, tmn * sizeof(char), 1, fs);
-                tmn = strlen(voo->galera[i].sobrenome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs);
-                fwrite(voo->galera[i].sobrenome, tmn * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].cpf, 15 * sizeof(char), 1, fs);
-                fwrite(&voo->galera[i].dia, sizeof(int), 1, fs);
-                fwrite(&voo->galera[i].mes, sizeof(int), 1, fs);
-                fwrite(&voo->galera[i].ano, sizeof(int), 1, fs);
-                fwrite(voo->galera[i].id, 5 * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].assento, 4 * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].classe, 10 * sizeof(char), 1, fs);
-                fwrite(&voo->galera[i].valor, sizeof(float), 1, fs);
-                fwrite(voo->galera[i].origem, 4 * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].destino, 4 * sizeof(char), 1, fs);
-            }
-            fclose(fs);
-        }
+        exportarArquivo(voo);
         printf("Fechamento do dia:\n");
         printf("Quantidade de reservas: %d\n", voo->reservasTotais);
         printf("Posição: %.2f\n", voo->valorTotall);
@@ -510,8 +549,12 @@ void fecharDia(aviao *voo) {
             free(voo->galera[i].destino);
             free(voo->galera[i].cpf);
             free(voo->galera[i].id);
+            free(voo->galera[i].dia);
+            free(voo->galera[i].mes);
+            free(voo->galera[i].ano);
         }
         free(voo->galera);
+        voo->galera = NULL;
         exit(0);
     }
 }   
@@ -519,9 +562,7 @@ void fecharDia(aviao *voo) {
 /*
 * Função para realizar o fechamento o voo, imprimindo os dados das reservas e o valor total arrecadado
 *
-* @param float valortotal: valor total arrecadado no dia que irá ser somado ao valor total arrecadado até o dia
-*        int reservasTotais: quantidade de reservas totais existentes
-*        galera: ponteiro da struct reserva
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
@@ -539,71 +580,15 @@ void fecharVoo(aviao *voo) {
             free(voo->galera[i].destino);
             free(voo->galera[i].cpf);
             free(voo->galera[i].id);
+            free(voo->galera[i].dia);
+            free(voo->galera[i].mes);
+            free(voo->galera[i].ano);
         }
         free(voo->galera);
+        voo->galera = NULL;
         exit(0);
     }else {
-        if(RegistroExiste()){
-            FILE *fs2 = fopen("SuperRegistroTemp.dat", "wb");
-            fwrite(&voo->assentos, sizeof(int), 1, fs2);
-            fwrite(&voo->reservasTotais, sizeof(int), 1, fs2);
-            fwrite(&voo->reservasAlocadas, sizeof(int), 1, fs2);
-            fwrite(&voo->precoEconomica, sizeof(float), 1, fs2);
-            fwrite(&voo->precoExecutiva, sizeof(float), 1, fs2);
-            fwrite(&voo->valorTotall, sizeof(float), 1, fs2);
-            for(int i = 0; i < (voo->reservasTotais); i ++) {
-                size_t tmn = strlen(voo->galera[i].nome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs2);
-                fwrite(voo->galera[i].nome, tmn * sizeof(char), 1, fs2);
-                tmn = strlen(voo->galera[i].sobrenome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs2);
-                fwrite(voo->galera[i].sobrenome, tmn * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].cpf, 15 * sizeof(char), 1, fs2);
-                fwrite(&voo->galera[i].dia, sizeof(int), 1, fs2);
-                fwrite(&voo->galera[i].mes, sizeof(int), 1, fs2);
-                fwrite(&voo->galera[i].ano, sizeof(int), 1, fs2);
-                fwrite(voo->galera[i].id, 5 * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].assento, 4 * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].classe, 10 * sizeof(char), 1, fs2);
-                fwrite(&voo->galera[i].valor, sizeof(float), 1, fs2);
-                fwrite(voo->galera[i].origem, 4 * sizeof(char), 1, fs2);
-                fwrite(voo->galera[i].destino, 4 * sizeof(char), 1, fs2);
-            }
-            fclose(fs2);
-            remove("SuperRegistro.dat");
-            rename("SuperRegistroTemp.dat", "SuperRegistro.dat");
-        } else {
-            FILE *fs = fopen("SuperRegistro.dat", "wb");
-            fwrite(&voo->assentos, sizeof(int), 1, fs);
-            fwrite(&voo->reservasTotais, sizeof(int), 1, fs);
-            fwrite(&voo->reservasAlocadas, sizeof(int), 1, fs);
-            fwrite(&voo->precoEconomica, sizeof(float), 1, fs);
-            fwrite(&voo->precoExecutiva, sizeof(float), 1, fs);
-            fwrite(&voo->valorTotall, sizeof(float), 1, fs);
-            for(int i = 0; i < (voo->reservasTotais); i ++) {
-                size_t tmn = strlen(voo->galera[i].nome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs);
-                fwrite(voo->galera[i].nome, tmn * sizeof(char), 1, fs);
-                tmn = strlen(voo->galera[i].sobrenome);
-                tmn ++;
-                fwrite(&tmn, sizeof(size_t), 1, fs);
-                fwrite(voo->galera[i].sobrenome, tmn * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].cpf, 15 * sizeof(char), 1, fs);
-                fwrite(&voo->galera[i].dia, sizeof(int), 1, fs);
-                fwrite(&voo->galera[i].mes, sizeof(int), 1, fs);
-                fwrite(&voo->galera[i].ano, sizeof(int), 1, fs);
-                fwrite(voo->galera[i].id, 5 * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].assento, 4 * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].classe, 10 * sizeof(char), 1, fs);
-                fwrite(&voo->galera[i].valor, sizeof(float), 1, fs);
-                fwrite(voo->galera[i].origem, 4 * sizeof(char), 1, fs);
-                fwrite(voo->galera[i].destino, 4 * sizeof(char), 1, fs);
-            }
-            fclose(fs);
-        }
+        exportarArquivo(voo);
         rename("SuperRegistro.dat", "SuperRegistroF.dat");
 
 
@@ -619,8 +604,12 @@ void fecharVoo(aviao *voo) {
             free(voo->galera[i].destino);
             free(voo->galera[i].cpf);
             free(voo->galera[i].id);
+            free(voo->galera[i].dia);
+            free(voo->galera[i].mes);
+            free(voo->galera[i].ano);
         }
         free(voo->galera);
+        voo->galera = NULL;
         exit(0);
     }
 }
@@ -628,8 +617,7 @@ void fecharVoo(aviao *voo) {
 /*
 * Função para repetição do print formatado avisando que o voo foi fechado
 *
-* @param galera: ponteiro da struct reserva
-*        int reservasTotais: quantidade de reservas totais existentes
+* @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
@@ -656,6 +644,7 @@ void printVooFechado(aviao *voo){
 
 int main(void) {
     int voo = 0;
+    int c;
     aviao infos;
     lerArquivo(&infos);
     if(vooFechou()){
@@ -663,7 +652,7 @@ int main(void) {
     }
     while (1) {
         char comando[3];
-        scanf(" %s", comando);
+        scanf(" %2s", comando);
         if (!strcmp(comando, "AV\0")) {
             aberturaVoo(&infos);
         } else if (!strcmp(comando, "RR\0")) {
@@ -683,7 +672,7 @@ int main(void) {
             fecharVoo(&infos);
         }
         else {
-            continue;   
+            while ((c = fgetc(stdin)) != '\n' && c != EOF);
         }
     }
     return 0;
