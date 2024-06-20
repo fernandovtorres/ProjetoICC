@@ -2,34 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
-Casos teste
-AV 200 1200.00 2500.00
-RR Carlos Massa 555.555.333-99 12 12 2024 V001 A27 economica 1200.00 CGH RAO
-RR Maria Massa 444.555.333-93 12 12 2024 V001 A31 economica 1200.00 CGH RAO
-RR Roberto Carlos 555.333.333-89 12 12 2024 V001 P12 executiva 2500.00 CGH RAO
-MR 555.555.333-99 Carlos Massa 555.555.333-99 A30
-CA 444.555.333-93
-FD
-RR Euclides Simon 222.111.333-12 12 12 2024 V001 B01 economica 1200.00 CGH RAO
-RR Marta Rocha 999.888.222-21 12 12 2024 V001 C02 executiva 2500.00 CGH RAO
-CR 555.333.333-89
-RR Clara Nunes 111.000.123-45 12 12 2024 V001 C09 executiva 2500.00 CGH RAO
-FV
-
-AV 150 500.00 1200.00
-RR João Silva 123.456.789-00 15 06 2024 V001 A01 economica 500.00 GRU CGH
-RR Maria Souza 987.654.321-00 15 06 2024 V001 A02 economica 500.00 GRU CGH
-RR Carlos Lima 555.666.777-88 15 06 2024 V001 B01 executiva 1200.00 GRU CGH
-FD
-*/
 
 /*
 *  Autores: Fernando Valentim Torres, Daniel Jorge Manzano, Henrique Vieira Lima
 *  Número USP: 15452340, 15446861, 15459372 
 *  Curso: Bacharelado em Ciências de Computação
 *  Disciplina: SCC0221 - Introdução à Ciência de Computação I
-*  Data de entrega: 14/06/2024
+*  Data de entrega: 16/06/2024
 *  Descrição do projeto:
 *  O projeto consiste em um sistema de gerenciamento de reservas de voos. 
 *  O sistema permite a abertura de um voo, a realização, a consulta, o cancelamento e a modificação de reservas, o fechamento do dia e o fechamento do voo.
@@ -41,12 +20,12 @@ FD
 *  - char* cpf: armazena o CPF do passageiro
 *  - char* nome: armazena o nome do passageiro
 *  - char* sobrenome: armazena o sobrenome do passageiro
-*  - int dia: armazena o dia da reserva
-*  - int mes: armazena o mês da reserva
-*  - int ano: armazena o ano da reserva
+*  - char* dia: armazena o dia da reserva
+*  - char* mes: armazena o mês da reserva
+*  - char* ano: armazena o ano da reserva
 *  - char* id: armazena o ID do voo
 *  - char* assento: armazena o assento do passageiro
-*  - char* classe: armazena a classe do voo
+*  - char* classe: armazena a classe da passagem (economica ou executiva)
 *  - char* origem: armazena a origem do voo
 *  - char* destino: armazena o destino do voo
 *  - float valor: armazena o valor da reserva
@@ -74,7 +53,7 @@ typedef struct {
 * - int reservasAlocadas: armazena a quantidade de reservas alocadas
 * - float precoEconomica: armazena o preço da classe economica
 * - float precoExecutiva: armazena o preço da classe executiva
-* - float valorTotal: armazena o valor total arrecadado
+* - float valorTotall: armazena o valor total arrecadado
 * - reserva* galera: um array de reservas
 */
 
@@ -104,6 +83,12 @@ void modificarReserva(aviao *voo); //Modifica a reserva
 void fecharDia(aviao *voo); //Fecha o dia
 void fecharVoo(aviao *voo); //Fecha o voo
 void printVooFechado(aviao *voo); //Faz o print formatado do voofechado
+
+/*
+* Função para ler o arquivo de registro e armazenar essas informações no struct
+* @param aviao * voo: ponteiro da struct aviao onde ficarão localizados as informações sobre o voo
+* @return void
+*/
 
 void lerArquivo(aviao *voo){
     char nomeDoArquivo[20];
@@ -151,6 +136,13 @@ void lerArquivo(aviao *voo){
     }
     fclose(fs);
 }
+
+/*
+* Função para exportar as informações do struct para o arquivo de registro
+*
+* @param aviao * voo: ponteiro da struct aviao onde estão localizados as informações sobre o voo
+* @return void
+*/
 
 void exportarArquivo(aviao* voo){
     if(RegistroExiste()){
@@ -256,7 +248,7 @@ void liberarReserva(reserva* pessoa) {
 }
 
 /*
-* Função para verificar se o arquivo referente ao registro das pessoas existe
+* Função para verificar se o arquivo referente ao registro das informações existe
 *   
 * @param void
 * @return int: 1 se o arquivo existe, 0 caso não exista
@@ -311,14 +303,14 @@ int consultaCPF(char cpf[15], aviao * voo) {
 
 /*
 * Função para abrir o voo.
-* Caso o arquivo Avoo.dat não exista (o que indica que o voo não foi aberto), a função pede a quantidade de assentos e o preço da classe economica e executiva.
-* Em seguida, os dados são escritos no arquivo criado Avoo.dat.
+* Caso o arquivo SuperRegistro.dat não exista (o que indica que o voo não foi aberto), a função pede a quantidade de assentos e o preço da classe economica e executiva.
+* Em seguida, os dados são escritos no arquivo criado SuperRegistro.dat.
 * @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
 */
 
 void aberturaVoo(aviao * voo) {
-    if (RegistroExiste()) {
+    if (RegistroExiste() || vooFechou()) {
         return;
     } else {
         int assentos;
@@ -326,9 +318,6 @@ void aberturaVoo(aviao * voo) {
         scanf(" %d", &assentos);
         scanf(" %f", &precoEconomica);
         scanf(" %f", &precoExecutiva);
-        if(vooFechou()){
-            return;
-        }
         FILE *fs = fopen("SuperRegistro.dat", "wb");
         voo->valorTotall = 0.0;
         voo->reservasTotais = 0;
@@ -507,7 +496,7 @@ void modificarReserva(aviao *voo){
 }
 
 /*
-* Função para realizar o fechamento do dia, calculando os assentos restantes e o valor total arrecadado até o dia.
+* Função para realizar o fechamento do dia, exportando as informações para um arquivo e dando free.
 *
 * @param aviao * voo: ponteiro da struct aviao onde está localizado todas as informações do voo
 * @return void
